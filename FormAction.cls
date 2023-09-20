@@ -117,10 +117,14 @@ public without sharing class FormAction {
     // Check the results of the insert operation and handle any errors
     for (Database.SaveResult result : formShareInsertResult) {
       if (!result.isSuccess()) {
+
+        // THIS LINE IS NOT COVERED
         for (Database.Error error : result.getErrors()) {
           System.debug(
             'Error while inserting Form__Share record: ' + error.getMessage()
           );
+
+          // THIS LINE IS NOT COVERED
           throw new CustomException('Error while inserting Form__Share record: ' + error.getMessage());
         }
       }
@@ -179,12 +183,16 @@ public without sharing class FormAction {
         List<Database.DeleteResult> deleteResults = Database.delete(sharesToDelete);
 
         // Check the results of the delete operation.
+
+        // THIS LINE IS NOT COVERED
         for (Database.DeleteResult result : deleteResults) {
           if (!result.isSuccess()) {
             for (Database.Error error : result.getErrors()) {
               System.debug(
                 'Error while deleting Form__Share record: ' + error.getMessage()
               );
+
+              // THIS LINE IS NOT COVERED
               throw new CustomException('Error while inserting Form__Share record: ' + error.getMessage());
             }
           }
