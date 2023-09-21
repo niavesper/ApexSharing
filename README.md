@@ -44,16 +44,16 @@ So I click into a Form record > Sharing button > Edit next to "Shared with 5 gro
 Both of these records show up when you click View next to DD’s name:
 
 SHARE RECORD 1
-Shared With: User: DD
-Reason for Access: “Apex Sharing: Managers” (this is the custom sharing reason I created and is same thing as share.RowCause = 'ApexSharingManagers__c')
-Relationship: Self
-Form Access: Read Only
+- Shared With: User: DD
+- Reason for Access: “Apex Sharing: Managers” (this is the custom sharing reason I created and is same thing as share.RowCause = 'ApexSharingManagers__c')
+- Relationship: Self
+- Form Access: Read Only
 
 SHARE RECORD 2
-Shared With: User: SM
-Reason for Access: “Apex Sharing: Managers”
-Relationship: Manager of User
-Form Access: Read Only
+- Shared With: User: SM
+- Reason for Access: “Apex Sharing: Managers”
+- Relationship: Manager of User
+- Form Access: Read Only
 
 This tells me that DD was given access to the record twice: once as herself, due to my Apex class and the share record it creates, and the second time by Salesforce via the role hierarchy. So there must be some field that has something in common between SHARE RECORD 1 and SHARE RECORD 2 because they are both sharing the record with DD. And Salesforce knows to put them on the same page, next to DD’s name. So what I was hoping for is that my code would identify that DD would be given access to the record by Salesforce, because she is SM’s manager, and that my code would do deduplication and NOT create a share record (SHARE RECORD 1) for her.
 
