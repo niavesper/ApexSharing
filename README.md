@@ -12,9 +12,9 @@ Dept Finance Director (specified directly in the approval process).
 
 
 Everyone listed below needs to have access to it, but no one else:
-the creator
-all the approvers
-users above them in the role hierarchy
+- the creator
+- all the approvers
+- users above them in the role hierarchy
 
 
 When the value of the lookups (to user) Supervisor/Manager and Division Director change, share records for old users (those that used to be in the lookups) need to be deleted.
@@ -22,12 +22,14 @@ When the value of the lookups (to user) Supervisor/Manager and Division Director
 
 # Additional considerations
 
-
+The following means that sharing rules won't work:
 - Supervisor/Manager will not always be above the Form creator in the role hierarchy -- the two could be in the same role (or the same person)
 - There are multiple Supervisor/Managers within the same Division
 - Finance Director and Executive Director will always be the same people (on every form), but Supervisor/Managers and Division Directors will be different on different forms.
 - Division Director will not always be above Supervisor/Manager in the role hierarchy -- the two could be in the same role
 - Division Director will not always be above the form creator in the role hierarchy -- the two could be in the same role
+
+  Also of note:
 - Finance Director and Executive Director will always be above everyone else in the role hierarchy. They are in the same role
 -  “Grant Access Using Hierarchies” is checked in Form’s sharing settings
 
