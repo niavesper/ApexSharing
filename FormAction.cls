@@ -7,11 +7,11 @@
 // History:   V.1
 public without sharing class FormAction {
 
-  // Define the custom exception as an inner class. To be used if a DML operation fails
-  public class CustomException extends Exception {}
-
-  public static void passVariablesToMethods(List<Form__c> forms, Map<Id, Form__c> oldFormsMap) {
-    // Initialize sets to store user IDs for sharing and deletion    
+  public static void passVariablesToMethods(
+    List<Form__c> forms,
+    Map<Id, Form__c> oldFormsMap
+  ) {
+    // Initialize sets to store user IDs for sharing and deletion
     Set<Id> userIdsForSharing = new Set<Id>();
     Set<Id> userIdsForDeletion = new Set<Id>();
 
@@ -27,17 +27,24 @@ public without sharing class FormAction {
 
     // Populate user IDs based on Form lookups (Supervisor_Manager__c and Division_Director__c)
     // for the purposes of deleting share records
-    if (oldFormsMap != null) {    
-    passSupervisorAndDirectorToHelperDelete(forms, userIdsForDeletion, oldFormsMap);
+    if (oldFormsMap != null) {
+      passSupervisorAndDirectorToHelperDelete(
+        forms,
+        userIdsForDeletion,
+        oldFormsMap
+      );
     }
     // Delete share records for the specified user IDs
     deleteShareRecords(userIdsForDeletion);
   }
- 
+
   /* Helper method for checking if user IDs in lookups (Supervisor_Manager__c and Division_Director__c)
    are null and if not, adding them to the userIdsForSharing set.
    The parameters are passed to this method by the method passSupervisorAndDirectorToHelperCreate */
-  private static void addUserIdsToSetForShareCreation(Id lookup, Set<Id> userIdsForSharing) {
+  private static void addUserIdsToSetForShareCreation(
+    Id lookup,
+    Set<Id> userIdsForSharing
+  ) {
     if (lookup != null) {
       userIdsForSharing.add(lookup);
     }
@@ -46,13 +53,22 @@ public without sharing class FormAction {
   /* Method for passing (1) user IDs (Supervisor_Manager__c and Division_Director__c) and
   (2) a set of IDs (userIdsForSharing) to the helper method which adds those IDs to the set.
   The parameters are passed to this method by the method passVariablesToMethods*/
-  private static void passSupervisorAndDirectorToHelperCreate(List<Form__c> forms, Set<Id> userIdsForSharing) {
+  private static void passSupervisorAndDirectorToHelperCreate(
+    List<Form__c> forms,
+    Set<Id> userIdsForSharing
+  ) {
     for (Form__c f : forms) {
       if (f.Supervisor_Manager__c != null) {
-        addUserIdsToSetForShareCreation(f.Supervisor_Manager__c, userIdsForSharing);
+        addUserIdsToSetForShareCreation(
+          f.Supervisor_Manager__c,
+          userIdsForSharing
+        );
       }
       if (f.Division_Director__c != null) {
-        addUserIdsToSetForShareCreation(f.Division_Director__c, userIdsForSharing);
+        addUserIdsToSetForShareCreation(
+          f.Division_Director__c,
+          userIdsForSharing
+        );
       }
     }
   }
@@ -96,7 +112,10 @@ public without sharing class FormAction {
   }
 
   /* Method for creating and inserting share records for each user in the set*/
-  public static void createAndInsertShares(List<Form__c> forms, Set<Id> userIdsForSharing) {
+  public static void createAndInsertShares(
+    List<Form__c> forms,
+    Set<Id> userIdsForSharing
+  ) {
     // A list to hold share records to be inserted
     List<Form__Share> sharesToInsert = new List<Form__Share>();
     // Create Form__Share records for each Form__c record and User ID combination.
@@ -111,39 +130,33 @@ public without sharing class FormAction {
       }
     }
 
-    // Insert all of the newly created Share records and capture save result
-    Database.SaveResult[] formShareInsertResult = Database.insert(sharesToInsert,true);
-
-    // Check the results of the insert operation and handle any errors
-    for (Database.SaveResult result : formShareInsertResult) {
-      if (!result.isSuccess()) {
-
-        // THIS LINE IS NOT COVERED
-        for (Database.Error error : result.getErrors()) {
-          System.debug(
-            'Error while inserting Form__Share record: ' + error.getMessage()
-          );
-
-          // THIS LINE IS NOT COVERED
-          throw new CustomException('Error while inserting Form__Share record: ' + error.getMessage());
-        }
-      }
+    // Insert all of the newly created Share records
+    if (!sharesToInsert.isEmpty()) {
+      insert sharesToInsert;
     }
   }
 
   /* Helper method for checking if Supervisor_Manager__c or Division_Director__c lookup fields have been updated
   on an existing Form__c object and if yes, adding old lookup values (IDs) to the set userIdsForDeletion.
   The parameters are passed to this method by the method passSupervisorAndDirectorToHelperDelete.*/
-  private static void addUserIdsToSetForShareDeletion(Id lookup, Id oldLookup, set<Id> userIdsForDeletion) {
+  private static void addUserIdsToSetForShareDeletion(
+    Id lookup,
+    Id oldLookup,
+    set<Id> userIdsForDeletion
+  ) {
     if (lookup != oldLookup) {
       userIdsForDeletion.add(oldLookup);
     }
   }
 
   /*Method for passing user IDs (old and new IDs from the Supervisor_Manager__c and Division_Director__c fields)
-  and a set (userIdsForDeletion) to the helper method, which adds old IDs to the set userIdsForDeletion. */
-  public static void passSupervisorAndDirectorToHelperDelete(List<Form__c> forms, Set<Id> userIdsForDeletion, Map<Id, Form__c> oldFormsMap) {
-    for (Form__c f : forms) { 
+   and a set (userIdsForDeletion) to the helper method, which adds old IDs to the set userIdsForDeletion. */
+  public static void passSupervisorAndDirectorToHelperDelete(
+    List<Form__c> forms,
+    Set<Id> userIdsForDeletion,
+    Map<Id, Form__c> oldFormsMap
+  ) {
+    for (Form__c f : forms) {
       Form__c oldF = oldFormsMap.get(f.Id);
       // We are not checking if Supervisor_Manager__c or Division_Director__c are null. It's ok for them to be null because we also
       // want to delete old share records for users who used to be in these fields if these fields go from populated to null
@@ -158,16 +171,16 @@ public without sharing class FormAction {
           f.Division_Director__c,
           oldF.Division_Director__c,
           userIdsForDeletion
-        );    
+        );
       }
     }
   }
 
-    /* Method for (1) querying share records that share the Form__c record with users from the userIdsForDeletion set
+  /* Method for (1) querying share records that share the Form__c record with users from the userIdsForDeletion set
      i.e., users who used to be in the Supervisor_Manager__c and Division_Director__c lookup fields
     before those fields got updated; (2) assigning those share records to a list and (3) deleting them.
     The parameters are passed to this method by the method passVariablesToMethods*/
-    public static void deleteShareRecords(Set<Id> userIdsForDeletion){
+  public static void deleteShareRecords(Set<Id> userIdsForDeletion) {
     if (!userIdsForDeletion.isEmpty()) {
       List<Form__Share> sharesToDelete = [
         SELECT Id, UserOrGroupId
@@ -180,23 +193,7 @@ public without sharing class FormAction {
 
       // Delete Share records that are in the list sharesToDelete
       if (!sharesToDelete.isEmpty()) {
-        List<Database.DeleteResult> deleteResults = Database.delete(sharesToDelete);
-
-        // Check the results of the delete operation.
-
-        // THIS LINE IS NOT COVERED
-        for (Database.DeleteResult result : deleteResults) {
-          if (!result.isSuccess()) {
-            for (Database.Error error : result.getErrors()) {
-              System.debug(
-                'Error while deleting Form__Share record: ' + error.getMessage()
-              );
-
-              // THIS LINE IS NOT COVERED
-              throw new CustomException('Error while inserting Form__Share record: ' + error.getMessage());
-            }
-          }
-        }
+        delete sharesToDelete;
       }
     }
   }
