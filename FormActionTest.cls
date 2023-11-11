@@ -1,9 +1,7 @@
+// Description:   Class created to test FormAction class.
+
 @isTest
 private class FormActionTest {
-  // Define the custom exception as an inner class. To be used if a user profile is not found by its name.
-  public class customException extends Exception {
-  }
-
   // Helper method to create User records
   private static List<User> createUserRecords(
     Integer numUsers,
@@ -58,7 +56,7 @@ private class FormActionTest {
     return forms;
   }
 
-  // Method for returning the number of users whose emails addresses match those from relevant CMDT records
+  // Method for returning users whose emails addresses match those from relevant CMDT records
   // To be used in asserting expected number of created shares
   static Set<Id> getCMDTusers() {
     // A set to hold the emails from relevant CMDT records
@@ -82,13 +80,15 @@ private class FormActionTest {
       }
     }
 
-    // Query # of user records whose emails match those from CMDT
+    // Query user records whose emails match those from CMDT
     List<User> cmdtUsers = [
       SELECT Id
       FROM User
       WHERE Email IN :cmdtEmails
     ];
 
+    // Convert list to set since we need to return a set
+    // (having a set prevents the possibility of duplicate values)
     Set<Id> cmdtUserIds = new Set<Id>();
     for (User u : cmdtUsers) {
       cmdtUserIds.add(u.Id);
@@ -99,24 +99,39 @@ private class FormActionTest {
 
   @testSetup
   static void setupTestData() {
-    // Query a profile that will be assigned to test users and do error handling if profile is not found
-    List<Profile> profiles = [
-      SELECT Id
-      FROM Profile
-      WHERE Name = '(DHA) Chatter Only User'
-    ];
+    // Declare variables to be used inside of the try-catch block. This is necessary because
+    // variables declared inside of the try block are not accessible outside of it.
+    List<Profile> profiles;
+    Profile p;
+    List<User> supervisorUsers;
+    List<User> directorUsers;
 
-    if (profiles.isEmpty()) {
-      throw new customException(
-        'Profile not found. Please ensure the profile exists.'
-      );
+    try {
+      // Start of the try block where we place code that might throw an exception
+      // Query to fetch a profile by its Name. The query result will be stored in the 'profiles' list.
+      profiles = [
+        SELECT Id
+        FROM Profile
+        WHERE Name = '(DHA) Chatter Only User'
+      ];
+      // Check if the 'profiles' list is empty, meaning the profile was not found
+      if (profiles.isEmpty()) {
+        // Log a debug message if the profile is not found
+        System.debug('Profile not found. Please ensure the profile exists.');
+      } else {
+        // If the profile is found, take the first one and assign it to variable 'p'
+        p = profiles[0];
+      }
+    } catch (Exception e) {
+      // Start of the catch block where we catch any exceptions thrown in the try block
+      // Log the exception message if any error occurs
+      System.debug('An error occurred: ' + e.getMessage());
     }
 
-    Profile p = profiles[0];
-
-    // Create Supervisor and Director test users for insertion testing
-    List<User> supervisorUsers = createUserRecords(20, 'Supervisor', p.Id);
-    List<User> directorUsers = createUserRecords(20, 'Director', p.Id);
+    if (p != null) {
+      supervisorUsers = createUserRecords(20, 'Supervisor', p.Id);
+      directorUsers = createUserRecords(20, 'Director', p.Id);
+    }
 
     // Create Supervisor and Director test users for deletion testing
     List<User> supervisorUsersDeletion = createUserRecords(
@@ -172,7 +187,6 @@ private class FormActionTest {
       actualShares.size(),
       'Incorrect number of shares inserted.'
     );
-    // Add other assertions as needed
   }
 
   // TEST METHOD #1. Tests insertion of shares for Form records where BOTH the Supervisor_Manager__c and the Division_Director__c
@@ -234,7 +248,6 @@ private class FormActionTest {
     Integer expectedShareNum =
       allManagerForms.size() * userIdsForSharing.size();
 
-    // Execute test
     Test.startTest();
     FormAction.createAndInsertShares(allManagerForms, userIdsForSharing);
     Test.stopTest();
@@ -324,8 +337,7 @@ private class FormActionTest {
       FROM Form__c
       WHERE EIN__c = 'directorsOnlyForms'
     ];
-    
-    
+
     Set<Id> userIdsForSharing = new Set<Id>();
 
     // Query users in the Division_Director__c lookup on Forms, to be insterted in the test.
@@ -357,7 +369,6 @@ private class FormActionTest {
     Integer expectedShareNum =
       directorOnlyForms.size() * userIdsForSharing.size();
 
-    // Execute test
     Test.startTest();
     FormAction.createAndInsertShares(directorOnlyForms, userIdsForSharing);
     Test.stopTest();
@@ -395,11 +406,10 @@ private class FormActionTest {
 
     // Add IDs of all users for whom share records will be created to the set instantiated earlier
     userIdsForSharing.addAll(cmdtUserIds);
-    
+
     // Calculate total # of expected shares
     Integer expectedShareNum = noManagerForms.size() * cmdtUserIds.size();
 
-    // Execute test
     Test.startTest();
     FormAction.createAndInsertShares(noManagerForms, userIdsForSharing);
     Test.stopTest();
@@ -429,20 +439,19 @@ private class FormActionTest {
       FROM Form__c
       WHERE EIN__c = 'allManagerForms'
     ];
-    
+
     // Instatiate maps to hold current and old Form records
     Map<Id, Form__c> allManagerFormsMap = new Map<Id, Form__c>();
     Map<Id, Form__c> oldManagerFormsMap = new Map<Id, Form__c>();
-   
+
     if (!allManagerForms.isEmpty()) {
       // Convert the list to a map to represent the current state of Forms (these forms will be updated later)
       allManagerFormsMap = new Map<Id, Form__c>(allManagerForms);
 
       // Deep clone the map to represent the old state of Forms (before the update, which will be run later)
       oldManagerFormsMap = allManagerFormsMap.deepClone();
-      System.debug('###oldManagerFormsMap size: ' + oldManagerFormsMap.size());
     }
-    
+
     // Set to hold user IDs, to be used when deleting shares
     Set<Id> userIdsForDeletion = new Set<Id>();
     for (Id userId : oldManagerFormsMap.keySet()) {
@@ -471,7 +480,6 @@ private class FormActionTest {
     // Perform the update DML operation
     update allManagerForms;
 
-    // Execute test
     Test.startTest();
     FormAction.passSupervisorAndDirectorToHelperDelete(
       allManagerForms,
@@ -489,7 +497,7 @@ private class FormActionTest {
         AND RowCause = 'ApexSharingManagers__c'
         AND AccessLevel = 'Read'
     ];
-    
+
     // Check that no sharing records exist
     System.assertEquals(
       0,
@@ -498,4 +506,3 @@ private class FormActionTest {
     );
   }
 }
-
