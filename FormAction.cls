@@ -1,14 +1,13 @@
 // Description:   Class created to insert and delete Form__Share records depending on the values of
 // (1) the lookups Supervisor_Manager__c and Division_Director__c and
 // (2) the values of records of CMDT Department_Management__mdt.
-// See Case 05-2023-31143 ("PAR issues") for more context.
-// History:   V.1
 
 // Not adding the "with sharing" keyword because, from what I understand, non-admin users
 // don't get access to share records (Form__Share in this case). When "with sharing" is added,
 // the end-user creating/updating the Form__c record gets an error when trying to save.
 // I cannot find any info on access to share records by non-admin users
 // (tried googling and GPT4 with Bing access), so leaving it without sharing for now (10/23/2023).
+
 public class FormAction {
 
   // Method that is called by the trigger FormTrigger on Form__c records after insert and after update
