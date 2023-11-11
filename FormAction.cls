@@ -1,12 +1,17 @@
-// Date:    ####
-// Author:  ####
 // Description:   Class created to insert and delete Form__Share records depending on the values of
 // (1) the lookups Supervisor_Manager__c and Division_Director__c and
 // (2) the values of records of CMDT Department_Management__mdt.
 // See Case 05-2023-31143 ("PAR issues") for more context.
 // History:   V.1
-public without sharing class FormAction {
 
+// Not adding the "with sharing" keyword because, from what I understand, non-admin users
+// don't get access to share records (Form__Share in this case). When "with sharing" is added,
+// the end-user creating/updating the Form__c record gets an error when trying to save.
+// I cannot find any info on access to share records by non-admin users
+// (tried googling and GPT4 with Bing access), so leaving it without sharing for now (10/23/2023).
+public class FormAction {
+
+  // Method that is called by the trigger FormTrigger on Form__c records after insert and after update
   public static void passVariablesToMethods(
     List<Form__c> forms,
     Map<Id, Form__c> oldFormsMap
@@ -15,18 +20,11 @@ public without sharing class FormAction {
     Set<Id> userIdsForSharing = new Set<Id>();
     Set<Id> userIdsForDeletion = new Set<Id>();
 
-    // Populate user IDs based on Form lookups (Supervisor_Manager__c and Division_Director__c)
-    // for the purposes of creating share records
+    // Pass (1) sets with user IDs and (2) list and/or map of Forms from the trigger to the helper methods
     passSupervisorAndDirectorToHelperCreate(forms, userIdsForSharing);
-
-    // Populate user IDs based on Department_Management__mdt
-    passCMDTManagersToHelper(userIdsForSharing);
-
-    // Create and insert share records for the specified user IDs
+    passCMDTManagersToHelper(userIdsForSharing);    
     createAndInsertShares(forms, userIdsForSharing);
 
-    // Populate user IDs based on Form lookups (Supervisor_Manager__c and Division_Director__c)
-    // for the purposes of deleting share records
     if (oldFormsMap != null) {
       passSupervisorAndDirectorToHelperDelete(
         forms,
@@ -34,7 +32,6 @@ public without sharing class FormAction {
         oldFormsMap
       );
     }
-    // Delete share records for the specified user IDs
     deleteShareRecords(userIdsForDeletion);
   }
 
@@ -150,7 +147,8 @@ public without sharing class FormAction {
   }
 
   /*Method for passing user IDs (old and new IDs from the Supervisor_Manager__c and Division_Director__c fields)
-   and a set (userIdsForDeletion) to the helper method, which adds old IDs to the set userIdsForDeletion. */
+  and a set (userIdsForDeletion) to the helper method, which adds old IDs to the set userIdsForDeletion. 
+  The parameters are passed to this method by the method passVariablesToMethods.*/
   public static void passSupervisorAndDirectorToHelperDelete(
     List<Form__c> forms,
     Set<Id> userIdsForDeletion,
@@ -177,9 +175,9 @@ public without sharing class FormAction {
   }
 
   /* Method for (1) querying share records that share the Form__c record with users from the userIdsForDeletion set
-     i.e., users who used to be in the Supervisor_Manager__c and Division_Director__c lookup fields
-    before those fields got updated; (2) assigning those share records to a list and (3) deleting them.
-    The parameters are passed to this method by the method passVariablesToMethods*/
+  i.e., users who used to be in the Supervisor_Manager__c and Division_Director__c lookup fields
+  before those fields got updated; (2) assigning those share records to a list and (3) deleting them.
+  The parameters are passed to this method by the method passVariablesToMethods*/
   public static void deleteShareRecords(Set<Id> userIdsForDeletion) {
     if (!userIdsForDeletion.isEmpty()) {
       List<Form__Share> sharesToDelete = [
